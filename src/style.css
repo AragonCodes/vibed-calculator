@@ -343,6 +343,25 @@ body::before {
   transition: transform 110ms ease, border-color 180ms ease, color 180ms ease, background 180ms ease;
 }
 
+.expression-key--copy {
+  margin-right: auto;
+}
+
+.expression-key--copy svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+
+.expression-key:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .expression-key:hover {
   border-color: var(--accent-border);
   color: var(--accent);
@@ -981,6 +1000,31 @@ kbd {
 .history-confirm__delete {
   border-color: color-mix(in srgb, var(--error) 32%, transparent) !important;
   color: var(--error) !important;
+}
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 28px;
+  padding: 10px 15px;
+  border: 1px solid var(--surface-border);
+  border-radius: 99px;
+  opacity: 0;
+  color: var(--text);
+  background: var(--surface-solid-a);
+  box-shadow: 0 14px 40px var(--surface-shadow);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 @keyframes drift {

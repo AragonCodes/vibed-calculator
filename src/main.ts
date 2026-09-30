@@ -2,6 +2,7 @@ import "./style.css";
 import { Calculator, isOperator } from "./calculator.ts";
 import { HistoryStore, type HistoryEntry } from "./history.ts";
 import { shouldStartNegativeEntry } from "./keyboard.ts";
+import { copyText } from "./clipboard.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
@@ -62,6 +63,9 @@ const historyClear = getElement<HTMLButtonElement>("#history-clear");
 const historyConfirm = getElement<HTMLDivElement>("#history-confirm");
 const historyCancel = getElement<HTMLButtonElement>("#history-cancel");
 const historyConfirmDelete = getElement<HTMLButtonElement>("#history-confirm-delete");
+const copyResult = getElement<HTMLButtonElement>("#copy-result");
+const toast = getElement<HTMLDivElement>("#toast");
+let toastTimer: number | undefined;
 
 function isTheme(value: string | null | undefined): value is Theme {
   return value !== null && value !== undefined && themes.includes(value as Theme);
@@ -87,12 +91,26 @@ function render(): void {
   expression.textContent = calculator.state.expression;
   display.classList.toggle("display__value--error", calculator.state.display === "Error");
   display.classList.toggle("display__value--compact", calculator.state.display.length > 9);
+  copyResult.disabled = calculator.state.display === "Error";
 
   document.querySelectorAll<HTMLButtonElement>('[data-action="operator"]').forEach((button) => {
     const active = calculator.state.operator === button.dataset.value && calculator.state.waitingForRight;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+}
+
+function showToast(message: string): void {
+  window.clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 1600);
+}
+
+async function copyCurrentResult(): Promise<void> {
+  if (calculator.state.display === "Error") return;
+  const copied = await copyText(calculator.state.display);
+  showToast(copied ? "Result copied" : "Could not copy result");
 }
 
 const historyDateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -192,6 +210,7 @@ function handleActionClick(event: MouseEvent): void {
 
 keypad.addEventListener("click", handleActionClick);
 expressionTools.addEventListener("click", handleActionClick);
+copyResult.addEventListener("click", () => void copyCurrentResult());
 
 helpButton.addEventListener("click", () => helpDialog.showModal());
 helpClose.addEventListener("click", () => helpDialog.close());
@@ -260,6 +279,12 @@ window.addEventListener("keydown", (event) => {
       if (themeDialog.open) themeDialog.close();
       if (historyDialog.open) historyDialog.close();
     }
+    return;
+  }
+
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c" && !window.getSelection()?.toString()) {
+    event.preventDefault();
+    void copyCurrentResult();
     return;
   }
 
