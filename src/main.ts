@@ -1,6 +1,7 @@
 import "./style.css";
 import { Calculator, isOperator } from "./calculator.ts";
 import { HistoryStore, type HistoryEntry } from "./history.ts";
+import { shouldStartNegativeEntry } from "./keyboard.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
@@ -262,11 +263,7 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  const minusStartsNumber = event.key === "-" && (
-    (calculator.state.display === "0" && calculator.state.operator === null) ||
-    calculator.state.waitingForRight ||
-    calculator.state.resetOnDigit
-  );
+  const minusStartsNumber = event.key === "-" && shouldStartNegativeEntry(calculator.state);
   const command: Command | undefined = minusStartsNumber
     ? ["negative"]
     : /^\d$/.test(event.key)

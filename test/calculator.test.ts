@@ -126,3 +126,16 @@ test("supports implicit multiplication before parentheses", () => {
   calculator.equals();
   assert.equal(calculator.state.display, "15");
 });
+
+test("continues subtracting from a completed result", () => {
+  const calculator = new Calculator();
+  enter(calculator, 5);
+  calculator.chooseOperator("−");
+  enter(calculator, 2);
+  calculator.equals();
+  calculator.chooseOperator("−");
+  enter(calculator, 1);
+  calculator.equals();
+  assert.equal(calculator.state.display, "2");
+  assert.equal(calculator.state.expression, "3 − 1 =");
+});
