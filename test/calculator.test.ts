@@ -74,3 +74,55 @@ test("accepts a negative number as the right operand", () => {
   calculator.equals();
   assert.equal(calculator.state.display, "-10");
 });
+
+test("evaluates values inside parentheses", () => {
+  const calculator = new Calculator();
+  enter(calculator, 5);
+  calculator.chooseOperator("×");
+  calculator.inputOpenParenthesis();
+  enter(calculator, 2);
+  calculator.chooseOperator("+");
+  enter(calculator, 5);
+  calculator.inputCloseParenthesis();
+  calculator.equals();
+  assert.equal(calculator.state.display, "35");
+  assert.equal(calculator.state.expression, "5 × (2 + 5) =");
+});
+
+test("supports nested parentheses", () => {
+  const calculator = new Calculator();
+  calculator.inputOpenParenthesis();
+  enter(calculator, 2);
+  calculator.chooseOperator("+");
+  calculator.inputOpenParenthesis();
+  enter(calculator, 3);
+  calculator.chooseOperator("×");
+  enter(calculator, 4);
+  calculator.inputCloseParenthesis();
+  calculator.inputCloseParenthesis();
+  calculator.equals();
+  assert.equal(calculator.state.display, "14");
+});
+
+test("uses standard operator precedence", () => {
+  const calculator = new Calculator();
+  enter(calculator, 2);
+  calculator.chooseOperator("+");
+  enter(calculator, 3);
+  calculator.chooseOperator("×");
+  enter(calculator, 4);
+  calculator.equals();
+  assert.equal(calculator.state.display, "14");
+});
+
+test("supports implicit multiplication before parentheses", () => {
+  const calculator = new Calculator();
+  enter(calculator, 3);
+  calculator.inputOpenParenthesis();
+  enter(calculator, 4);
+  calculator.chooseOperator("+");
+  enter(calculator, 1);
+  calculator.inputCloseParenthesis();
+  calculator.equals();
+  assert.equal(calculator.state.display, "15");
+});

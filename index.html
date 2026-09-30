@@ -28,6 +28,11 @@
           <output class="display__value" id="display">0</output>
         </div>
 
+        <div class="expression-tools" aria-label="Expression controls">
+          <button class="expression-key" data-action="open-parenthesis" type="button" aria-label="Open parenthesis">(</button>
+          <button class="expression-key" data-action="close-parenthesis" type="button" aria-label="Close parenthesis">)</button>
+        </div>
+
         <div class="keypad" id="keypad">
           <button class="key key--utility" data-action="clear" aria-label="Clear">AC</button>
           <button class="key key--utility" data-action="sign" aria-label="Toggle positive or negative">+/−</button>
@@ -76,6 +81,7 @@
         <div class="help-grid">
           <div class="help-item"><kbd>0–9</kbd><span>Enter numbers</span></div>
           <div class="help-item"><kbd>+ − × ÷</kbd><span>Choose an operation</span></div>
+          <div class="help-item"><kbd>( )</kbd><span>Group calculations</span></div>
           <div class="help-item"><kbd>Enter</kbd><span>Show the result</span></div>
           <div class="help-item"><kbd>Esc</kbd><span>Clear everything</span></div>
         </div>

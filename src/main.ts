@@ -1,7 +1,7 @@
 import "./style.css";
 import { Calculator, isOperator } from "./calculator.ts";
 
-type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent";
+type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
 type Theme =
   | "obsidian-dark" | "obsidian-light"
@@ -41,6 +41,7 @@ const calculator = new Calculator();
 const display = getElement<HTMLOutputElement>("#display");
 const expression = getElement<HTMLDivElement>("#expression");
 const keypad = getElement<HTMLDivElement>("#keypad");
+const expressionTools = getElement<HTMLDivElement>(".expression-tools");
 const helpDialog = getElement<HTMLDialogElement>("#help-dialog");
 const helpButton = getElement<HTMLButtonElement>("#help-button");
 const helpClose = getElement<HTMLButtonElement>("#help-close");
@@ -96,21 +97,27 @@ function run(action: Action, value?: string): void {
     case "sign": calculator.toggleSign(); break;
     case "negative": calculator.startNegativeEntry(); break;
     case "percent": calculator.percent(); break;
+    case "open-parenthesis": calculator.inputOpenParenthesis(); break;
+    case "close-parenthesis": calculator.inputCloseParenthesis(); break;
   }
   render();
 }
 
 function isAction(value: string | undefined): value is Action {
   return value === "digit" || value === "decimal" || value === "operator" || value === "equals" ||
-    value === "clear" || value === "sign" || value === "negative" || value === "percent";
+    value === "clear" || value === "sign" || value === "negative" || value === "percent" ||
+    value === "open-parenthesis" || value === "close-parenthesis";
 }
 
-keypad.addEventListener("click", (event) => {
+function handleActionClick(event: MouseEvent): void {
   if (!(event.target instanceof Element)) return;
   const button = event.target.closest<HTMLButtonElement>("button");
   if (!button || !isAction(button.dataset.action)) return;
   run(button.dataset.action, button.dataset.value);
-});
+}
+
+keypad.addEventListener("click", handleActionClick);
+expressionTools.addEventListener("click", handleActionClick);
 
 helpButton.addEventListener("click", () => helpDialog.showModal());
 helpClose.addEventListener("click", () => helpDialog.close());
@@ -138,6 +145,8 @@ const keyboardMap: Readonly<Record<string, Command>> = {
   ".": ["decimal"],
   ",": ["decimal"],
   "%": ["percent"],
+  "(": ["open-parenthesis"],
+  ")": ["close-parenthesis"],
   Enter: ["equals"],
   "=": ["equals"],
   Escape: ["clear"],

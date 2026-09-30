@@ -260,12 +260,16 @@ body::before {
 }
 
 .display__expression {
+  max-width: 100%;
   min-height: 22px;
   margin-bottom: 10px;
+  overflow: hidden;
   color: var(--text-faint);
   font-family: "DM Mono", monospace;
   font-size: 14px;
   letter-spacing: 0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .display__value {
@@ -288,6 +292,44 @@ body::before {
 
 .display__value--error {
   color: var(--error);
+}
+
+.expression-tools {
+  display: flex;
+  gap: 7px;
+  justify-content: flex-end;
+  padding: 0 7px 8px;
+}
+
+.expression-key {
+  display: grid;
+  width: 40px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  outline: none;
+  color: var(--text-soft);
+  background: linear-gradient(145deg, var(--control-a), var(--control-b));
+  font: 500 14px/1 "DM Mono", monospace;
+  cursor: pointer;
+  transition: transform 110ms ease, border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.expression-key:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+.expression-key:active,
+.expression-key.is-pressed {
+  transform: translateY(1px) scale(0.96);
+}
+
+.expression-key:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-border);
 }
 
 .keypad {
