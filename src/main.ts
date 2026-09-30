@@ -3,6 +3,7 @@ import { Calculator, isOperator } from "./calculator.ts";
 import { HistoryStore, type HistoryEntry } from "./history.ts";
 import { shouldStartNegativeEntry } from "./keyboard.ts";
 import { copyText } from "./clipboard.ts";
+import { formatDisplayNumber, formatExpressionNumbers } from "./number-format.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
@@ -66,6 +67,7 @@ const historyConfirmDelete = getElement<HTMLButtonElement>("#history-confirm-del
 const copyResult = getElement<HTMLButtonElement>("#copy-result");
 const toast = getElement<HTMLDivElement>("#toast");
 let toastTimer: number | undefined;
+const numberLocale = navigator.language;
 
 function isTheme(value: string | null | undefined): value is Theme {
   return value !== null && value !== undefined && themes.includes(value as Theme);
@@ -87,10 +89,11 @@ const savedTheme = localStorage.getItem("calculator-theme");
 applyTheme(isTheme(savedTheme) ? savedTheme : "obsidian-dark");
 
 function render(): void {
-  display.textContent = calculator.state.display;
-  expression.textContent = calculator.state.expression;
+  const formattedDisplay = formatDisplayNumber(calculator.state.display, numberLocale);
+  display.textContent = formattedDisplay;
+  expression.textContent = formatExpressionNumbers(calculator.state.expression, numberLocale);
   display.classList.toggle("display__value--error", calculator.state.display === "Error");
-  display.classList.toggle("display__value--compact", calculator.state.display.length > 9);
+  display.classList.toggle("display__value--compact", formattedDisplay.length > 9);
   copyResult.disabled = calculator.state.display === "Error";
 
   document.querySelectorAll<HTMLButtonElement>('[data-action="operator"]').forEach((button) => {
@@ -127,11 +130,11 @@ function createHistoryEntry(entry: HistoryEntry): HTMLElement {
 
   const expressionText = document.createElement("div");
   expressionText.className = "history-entry__expression";
-  expressionText.textContent = entry.expression;
+  expressionText.textContent = formatExpressionNumbers(entry.expression, numberLocale);
 
   const resultText = document.createElement("div");
   resultText.className = "history-entry__result";
-  resultText.textContent = entry.result;
+  resultText.textContent = formatDisplayNumber(entry.result, numberLocale);
 
   const timestamp = document.createElement("time");
   timestamp.className = "history-entry__time";

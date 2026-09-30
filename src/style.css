@@ -309,6 +309,7 @@ body::before {
   line-height: 0.95;
   letter-spacing: -0.075em;
   text-align: right;
+  font-variant-numeric: tabular-nums;
   text-shadow: 0 6px 34px var(--accent-soft);
   transition: color 180ms ease, font-size 180ms ease;
 }
@@ -875,6 +876,7 @@ kbd {
   font: 500 24px/1.15 "DM Mono", monospace;
   letter-spacing: -0.04em;
   text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .history-entry__time {
