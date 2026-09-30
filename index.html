@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="obsidian-dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,6 +13,14 @@
 
     <main class="app-shell">
       <section class="calculator" aria-label="Calculator">
+        <button class="theme-button" id="theme-button" type="button" aria-label="Choose a color theme">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="7.25"></circle>
+            <circle cx="10" cy="5.8" r="1.15" class="theme-button__dot"></circle>
+            <circle cx="6.4" cy="11.6" r="1.15" class="theme-button__dot"></circle>
+            <circle cx="13.6" cy="11.6" r="1.15" class="theme-button__dot"></circle>
+          </svg>
+        </button>
         <button class="help-button" id="help-button" type="button" aria-label="Open calculator help">?</button>
 
         <div class="display" aria-live="polite" aria-atomic="true">
@@ -24,7 +32,13 @@
           <button class="key key--utility" data-action="clear" aria-label="Clear">AC</button>
           <button class="key key--utility" data-action="sign" aria-label="Toggle positive or negative">+/−</button>
           <button class="key key--utility" data-action="percent" aria-label="Percent">%</button>
-          <button class="key key--operator" data-action="operator" data-value="÷" aria-label="Divide">÷</button>
+          <button class="key key--operator" data-action="operator" data-value="÷" aria-label="Divide">
+            <svg class="operator-icon operator-icon--divide" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="6.5" r="1.5"></circle>
+              <path d="M7.5 12h9"></path>
+              <circle cx="12" cy="17.5" r="1.5"></circle>
+            </svg>
+          </button>
 
           <button class="key" data-action="digit" data-value="7">7</button>
           <button class="key" data-action="digit" data-value="8">8</button>
@@ -67,6 +81,47 @@
         </div>
 
         <p class="help-dialog__note"><strong>Tip</strong> Use <span>+/−</span> to change a number’s sign and <span>%</span> to divide it by 100.</p>
+      </dialog>
+
+      <dialog class="theme-dialog" id="theme-dialog" aria-labelledby="theme-title">
+        <div class="theme-dialog__glow" aria-hidden="true"></div>
+        <div class="theme-dialog__header">
+          <div>
+            <span class="theme-dialog__eyebrow">Make it yours</span>
+            <h2 id="theme-title">Choose a theme</h2>
+          </div>
+          <button class="theme-dialog__close" id="theme-close" type="button" aria-label="Close themes">×</button>
+        </div>
+
+        <p class="theme-dialog__intro">Five palettes, each tuned for light and dark surroundings.</p>
+
+        <div class="theme-list" role="radiogroup" aria-label="Color theme">
+          <div class="theme-family">
+            <span class="theme-family__name">Obsidian</span>
+            <button class="theme-option theme-option--obsidian-dark" type="button" role="radio" data-theme-option="obsidian-dark"><span class="theme-option__preview"></span><span>Dark</span><span class="theme-option__check">✓</span></button>
+            <button class="theme-option theme-option--obsidian-light" type="button" role="radio" data-theme-option="obsidian-light"><span class="theme-option__preview"></span><span>Light</span><span class="theme-option__check">✓</span></button>
+          </div>
+          <div class="theme-family">
+            <span class="theme-family__name">Aurora</span>
+            <button class="theme-option theme-option--aurora-dark" type="button" role="radio" data-theme-option="aurora-dark"><span class="theme-option__preview"></span><span>Dark</span><span class="theme-option__check">✓</span></button>
+            <button class="theme-option theme-option--aurora-light" type="button" role="radio" data-theme-option="aurora-light"><span class="theme-option__preview"></span><span>Light</span><span class="theme-option__check">✓</span></button>
+          </div>
+          <div class="theme-family">
+            <span class="theme-family__name">Ember</span>
+            <button class="theme-option theme-option--ember-dark" type="button" role="radio" data-theme-option="ember-dark"><span class="theme-option__preview"></span><span>Dark</span><span class="theme-option__check">✓</span></button>
+            <button class="theme-option theme-option--ember-light" type="button" role="radio" data-theme-option="ember-light"><span class="theme-option__preview"></span><span>Light</span><span class="theme-option__check">✓</span></button>
+          </div>
+          <div class="theme-family">
+            <span class="theme-family__name">Ocean</span>
+            <button class="theme-option theme-option--ocean-dark" type="button" role="radio" data-theme-option="ocean-dark"><span class="theme-option__preview"></span><span>Dark</span><span class="theme-option__check">✓</span></button>
+            <button class="theme-option theme-option--ocean-light" type="button" role="radio" data-theme-option="ocean-light"><span class="theme-option__preview"></span><span>Light</span><span class="theme-option__check">✓</span></button>
+          </div>
+          <div class="theme-family">
+            <span class="theme-family__name">Rose</span>
+            <button class="theme-option theme-option--rose-dark" type="button" role="radio" data-theme-option="rose-dark"><span class="theme-option__preview"></span><span>Dark</span><span class="theme-option__check">✓</span></button>
+            <button class="theme-option theme-option--rose-light" type="button" role="radio" data-theme-option="rose-light"><span class="theme-option__preview"></span><span>Light</span><span class="theme-option__check">✓</span></button>
+          </div>
+        </div>
       </dialog>
     </main>
 

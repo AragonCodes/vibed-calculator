@@ -1,8 +1,35 @@
 import "./style.css";
-import { Calculator, isOperator, type Operator } from "./calculator.ts";
+import { Calculator, isOperator } from "./calculator.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent";
 type Command = readonly [action: Action, value?: string];
+type Theme =
+  | "obsidian-dark" | "obsidian-light"
+  | "aurora-dark" | "aurora-light"
+  | "ember-dark" | "ember-light"
+  | "ocean-dark" | "ocean-light"
+  | "rose-dark" | "rose-light";
+
+const themes: readonly Theme[] = [
+  "obsidian-dark", "obsidian-light",
+  "aurora-dark", "aurora-light",
+  "ember-dark", "ember-light",
+  "ocean-dark", "ocean-light",
+  "rose-dark", "rose-light",
+];
+
+const themeColors: Record<Theme, string> = {
+  "obsidian-dark": "#090b12",
+  "obsidian-light": "#eeeefa",
+  "aurora-dark": "#06110f",
+  "aurora-light": "#e9f6f1",
+  "ember-dark": "#140c09",
+  "ember-light": "#f7eee6",
+  "ocean-dark": "#06111b",
+  "ocean-light": "#e8f3f8",
+  "rose-dark": "#160b12",
+  "rose-light": "#f8edf1",
+};
 
 function getElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -17,6 +44,30 @@ const keypad = getElement<HTMLDivElement>("#keypad");
 const helpDialog = getElement<HTMLDialogElement>("#help-dialog");
 const helpButton = getElement<HTMLButtonElement>("#help-button");
 const helpClose = getElement<HTMLButtonElement>("#help-close");
+const themeDialog = getElement<HTMLDialogElement>("#theme-dialog");
+const themeButton = getElement<HTMLButtonElement>("#theme-button");
+const themeClose = getElement<HTMLButtonElement>("#theme-close");
+const themeColor = getElement<HTMLMetaElement>('meta[name="theme-color"]');
+const themeOptions = document.querySelectorAll<HTMLButtonElement>("[data-theme-option]");
+
+function isTheme(value: string | null | undefined): value is Theme {
+  return value !== null && value !== undefined && themes.includes(value as Theme);
+}
+
+function applyTheme(theme: Theme): void {
+  document.documentElement.dataset.theme = theme;
+  themeColor.content = themeColors[theme];
+  localStorage.setItem("calculator-theme", theme);
+
+  themeOptions.forEach((option) => {
+    const selected = option.dataset.themeOption === theme;
+    option.classList.toggle("is-selected", selected);
+    option.setAttribute("aria-checked", String(selected));
+  });
+}
+
+const savedTheme = localStorage.getItem("calculator-theme");
+applyTheme(isTheme(savedTheme) ? savedTheme : "obsidian-dark");
 
 function render(): void {
   display.textContent = calculator.state.display;
@@ -67,6 +118,18 @@ helpDialog.addEventListener("click", (event) => {
   if (event.target === helpDialog) helpDialog.close();
 });
 
+themeButton.addEventListener("click", () => themeDialog.showModal());
+themeClose.addEventListener("click", () => themeDialog.close());
+themeDialog.addEventListener("click", (event) => {
+  if (event.target === themeDialog) themeDialog.close();
+});
+themeOptions.forEach((option) => {
+  option.addEventListener("click", () => {
+    const theme = option.dataset.themeOption;
+    if (isTheme(theme)) applyTheme(theme);
+  });
+});
+
 const keyboardMap: Readonly<Record<string, Command>> = {
   "/": ["operator", "÷"],
   "*": ["operator", "×"],
@@ -82,10 +145,11 @@ const keyboardMap: Readonly<Record<string, Command>> = {
 };
 
 window.addEventListener("keydown", (event) => {
-  if (helpDialog.open) {
+  if (helpDialog.open || themeDialog.open) {
     if (event.key === "Escape") {
       event.preventDefault();
-      helpDialog.close();
+      if (helpDialog.open) helpDialog.close();
+      if (themeDialog.open) themeDialog.close();
     }
     return;
   }
