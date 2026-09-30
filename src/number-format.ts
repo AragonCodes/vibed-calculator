@@ -44,3 +44,14 @@ export function formatExpressionNumbers(expression: string, locale: string): str
   return expression.replace(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi, (value) =>
     formatDisplayNumber(value, locale));
 }
+
+export function parseLocalizedNumber(value: string, locale: string): number {
+  const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
+  const group = parts.find((part) => part.type === "group")?.value;
+  const decimal = parts.find((part) => part.type === "decimal")?.value ?? ".";
+  let normalized = value.trim().replace(/\s/g, "");
+  if (group) normalized = normalized.split(group).join("");
+  if (decimal !== ".") normalized = normalized.replace(decimal, ".");
+  if (normalized === "" || normalized === "-" || normalized === ".") return Number.NaN;
+  return Number(normalized);
+}

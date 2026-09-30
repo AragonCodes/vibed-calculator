@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatDisplayNumber, formatExpressionNumbers } from "../src/number-format.ts";
+import { formatDisplayNumber, formatExpressionNumbers, parseLocalizedNumber } from "../src/number-format.ts";
 
 test("groups thousands without changing the stored value", () => {
   assert.equal(formatDisplayNumber("1234567.89", "en-US"), "1,234,567.89");
@@ -29,4 +29,9 @@ test("formats numbers inside expressions", () => {
 
 test("leaves calculator errors untouched", () => {
   assert.equal(formatDisplayNumber("Error", "en-US"), "Error");
+});
+
+test("parses localized input for conversion", () => {
+  assert.equal(parseLocalizedNumber("1,234.5", "en-US"), 1234.5);
+  assert.equal(parseLocalizedNumber("1.234,5", "de-DE"), 1234.5);
 });

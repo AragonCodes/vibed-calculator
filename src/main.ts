@@ -3,7 +3,8 @@ import { Calculator, isOperator } from "./calculator.ts";
 import { HistoryStore, type HistoryEntry } from "./history.ts";
 import { shouldStartNegativeEntry } from "./keyboard.ts";
 import { copyText } from "./clipboard.ts";
-import { formatDisplayNumber, formatExpressionNumbers } from "./number-format.ts";
+import { formatDisplayNumber, formatExpressionNumbers, parseLocalizedNumber } from "./number-format.ts";
+import { convertUnits, isUnitCategoryId, unitCategories } from "./converter.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
@@ -66,11 +67,66 @@ const historyCancel = getElement<HTMLButtonElement>("#history-cancel");
 const historyConfirmDelete = getElement<HTMLButtonElement>("#history-confirm-delete");
 const copyResult = getElement<HTMLButtonElement>("#copy-result");
 const toast = getElement<HTMLDivElement>("#toast");
+const calculatorElement = getElement<HTMLElement>("#calculator");
+const converterButton = getElement<HTMLButtonElement>("#converter-button");
+const converter = getElement<HTMLElement>("#converter");
+const converterCategory = getElement<HTMLSelectElement>("#converter-category");
+const converterFrom = getElement<HTMLSelectElement>("#converter-from");
+const converterTo = getElement<HTMLSelectElement>("#converter-to");
+const converterInput = getElement<HTMLInputElement>("#converter-input");
+const converterOutput = getElement<HTMLOutputElement>("#converter-output");
+const converterSwap = getElement<HTMLButtonElement>("#converter-swap");
+const converterNote = getElement<HTMLParagraphElement>("#converter-note");
 let toastTimer: number | undefined;
 const numberLocale = navigator.language;
+let converterIsOpen = false;
 
 function isTheme(value: string | null | undefined): value is Theme {
   return value !== null && value !== undefined && themes.includes(value as Theme);
+}
+
+function createOption(value: string, label: string): HTMLOptionElement {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  return option;
+}
+
+function populateConverterCategories(): void {
+  converterCategory.append(...unitCategories.map((category) => createOption(category.id, category.name)));
+}
+
+function populateConverterUnits(): void {
+  if (!isUnitCategoryId(converterCategory.value)) return;
+  const category = unitCategories.find((item) => item.id === converterCategory.value);
+  if (!category) return;
+
+  const options = category.units.map((unit) => [unit.id, `${unit.name} (${unit.symbol})`] as const);
+  converterFrom.replaceChildren(...options.map(([id, label]) => createOption(id, label)));
+  converterTo.replaceChildren(...options.map(([id, label]) => createOption(id, label)));
+  [converterFrom.value, converterTo.value] = category.defaults;
+  converterNote.hidden = category.id !== "data";
+  updateConversion();
+}
+
+function updateConversion(): void {
+  if (!isUnitCategoryId(converterCategory.value)) return;
+  const value = parseLocalizedNumber(converterInput.value, numberLocale);
+  const result = convertUnits(value, converterCategory.value, converterFrom.value, converterTo.value);
+  converterInput.classList.toggle("is-invalid", converterInput.value !== "" && !Number.isFinite(result));
+  converterOutput.textContent = Number.isFinite(result)
+    ? formatDisplayNumber(Number.parseFloat(result.toPrecision(12)).toString(), numberLocale)
+    : "—";
+}
+
+function setConverterMode(open: boolean): void {
+  converterIsOpen = open;
+  calculatorElement.classList.toggle("is-converting", open);
+  calculatorElement.setAttribute("aria-label", open ? "Unit converter" : "Calculator");
+  converter.setAttribute("aria-hidden", String(!open));
+  converterButton.setAttribute("aria-pressed", String(open));
+  converterButton.setAttribute("aria-label", open ? "Return to calculator" : "Open unit converter");
+  if (open) window.setTimeout(() => converterInput.focus(), 0);
 }
 
 function applyTheme(theme: Theme): void {
@@ -214,6 +270,15 @@ function handleActionClick(event: MouseEvent): void {
 keypad.addEventListener("click", handleActionClick);
 expressionTools.addEventListener("click", handleActionClick);
 copyResult.addEventListener("click", () => void copyCurrentResult());
+converterButton.addEventListener("click", () => setConverterMode(!converterIsOpen));
+converterCategory.addEventListener("change", populateConverterUnits);
+converterFrom.addEventListener("change", updateConversion);
+converterTo.addEventListener("change", updateConversion);
+converterInput.addEventListener("input", updateConversion);
+converterSwap.addEventListener("click", () => {
+  [converterFrom.value, converterTo.value] = [converterTo.value, converterFrom.value];
+  updateConversion();
+});
 
 helpButton.addEventListener("click", () => helpDialog.showModal());
 helpClose.addEventListener("click", () => helpDialog.close());
@@ -285,6 +350,11 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
+  if (converterIsOpen) {
+    if (event.key === "Escape") setConverterMode(false);
+    return;
+  }
+
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c" && !window.getSelection()?.toString()) {
     event.preventDefault();
     void copyCurrentResult();
@@ -311,3 +381,5 @@ window.addEventListener("keydown", (event) => {
 
 render();
 renderHistory();
+populateConverterCategories();
+populateConverterUnits();
