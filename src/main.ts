@@ -1,5 +1,6 @@
 import "./style.css";
 import { Calculator, isOperator } from "./calculator.ts";
+import { HistoryStore, type HistoryEntry } from "./history.ts";
 
 type Action = "digit" | "decimal" | "operator" | "equals" | "clear" | "sign" | "negative" | "percent" | "open-parenthesis" | "close-parenthesis";
 type Command = readonly [action: Action, value?: string];
@@ -38,6 +39,7 @@ function getElement<T extends Element>(selector: string): T {
 }
 
 const calculator = new Calculator();
+const history = new HistoryStore();
 const display = getElement<HTMLOutputElement>("#display");
 const expression = getElement<HTMLDivElement>("#expression");
 const keypad = getElement<HTMLDivElement>("#keypad");
@@ -50,6 +52,15 @@ const themeButton = getElement<HTMLButtonElement>("#theme-button");
 const themeClose = getElement<HTMLButtonElement>("#theme-close");
 const themeColor = getElement<HTMLMetaElement>('meta[name="theme-color"]');
 const themeOptions = document.querySelectorAll<HTMLButtonElement>("[data-theme-option]");
+const historyDialog = getElement<HTMLDialogElement>("#history-dialog");
+const historyButton = getElement<HTMLButtonElement>("#history-button");
+const historyClose = getElement<HTMLButtonElement>("#history-close");
+const historyList = getElement<HTMLDivElement>("#history-list");
+const historyCount = getElement<HTMLSpanElement>("#history-count");
+const historyClear = getElement<HTMLButtonElement>("#history-clear");
+const historyConfirm = getElement<HTMLDivElement>("#history-confirm");
+const historyCancel = getElement<HTMLButtonElement>("#history-cancel");
+const historyConfirmDelete = getElement<HTMLButtonElement>("#history-confirm-delete");
 
 function isTheme(value: string | null | undefined): value is Theme {
   return value !== null && value !== undefined && themes.includes(value as Theme);
@@ -83,7 +94,65 @@ function render(): void {
   });
 }
 
+const historyDateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+function createHistoryEntry(entry: HistoryEntry): HTMLElement {
+  const item = document.createElement("article");
+  item.className = "history-entry";
+
+  const content = document.createElement("div");
+  content.className = "history-entry__content";
+
+  const expressionText = document.createElement("div");
+  expressionText.className = "history-entry__expression";
+  expressionText.textContent = entry.expression;
+
+  const resultText = document.createElement("div");
+  resultText.className = "history-entry__result";
+  resultText.textContent = entry.result;
+
+  const timestamp = document.createElement("time");
+  timestamp.className = "history-entry__time";
+  timestamp.dateTime = new Date(entry.createdAt).toISOString();
+  timestamp.textContent = historyDateFormatter.format(entry.createdAt);
+
+  const remove = document.createElement("button");
+  remove.className = "history-entry__delete";
+  remove.type = "button";
+  remove.setAttribute("aria-label", `Delete ${entry.expression} equals ${entry.result}`);
+  remove.textContent = "×";
+  remove.addEventListener("click", () => {
+    history.remove(entry.id);
+    renderHistory();
+  });
+
+  content.append(expressionText, resultText, timestamp);
+  item.append(content, remove);
+  return item;
+}
+
+function renderHistory(): void {
+  historyList.replaceChildren();
+  historyCount.textContent = String(history.entries.length);
+  historyCount.hidden = history.entries.length === 0;
+  historyClear.disabled = history.entries.length === 0;
+
+  if (history.entries.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.innerHTML = '<span aria-hidden="true">∅</span><strong>No calculations yet</strong><p>Completed calculations will appear here.</p>';
+    historyList.append(empty);
+    return;
+  }
+
+  historyList.append(...history.entries.map(createHistoryEntry));
+}
+
 function run(action: Action, value?: string): void {
+  const wasComplete = calculator.state.resetOnDigit;
   switch (action) {
     case "digit":
       if (value !== undefined) calculator.inputDigit(value);
@@ -99,6 +168,10 @@ function run(action: Action, value?: string): void {
     case "percent": calculator.percent(); break;
     case "open-parenthesis": calculator.inputOpenParenthesis(); break;
     case "close-parenthesis": calculator.inputCloseParenthesis(); break;
+  }
+  if (action === "equals" && !wasComplete && calculator.state.resetOnDigit && calculator.state.display !== "Error") {
+    history.add(calculator.state.expression.replace(/\s=$/, ""), calculator.state.display);
+    renderHistory();
   }
   render();
 }
@@ -137,6 +210,31 @@ themeOptions.forEach((option) => {
   });
 });
 
+function hideHistoryConfirmation(): void {
+  historyConfirm.hidden = true;
+  historyClear.hidden = false;
+}
+
+historyButton.addEventListener("click", () => {
+  hideHistoryConfirmation();
+  historyDialog.showModal();
+});
+historyClose.addEventListener("click", () => historyDialog.close());
+historyDialog.addEventListener("click", (event) => {
+  if (event.target === historyDialog) historyDialog.close();
+});
+historyClear.addEventListener("click", () => {
+  historyClear.hidden = true;
+  historyConfirm.hidden = false;
+  historyCancel.focus();
+});
+historyCancel.addEventListener("click", hideHistoryConfirmation);
+historyConfirmDelete.addEventListener("click", () => {
+  history.clear();
+  hideHistoryConfirmation();
+  renderHistory();
+});
+
 const keyboardMap: Readonly<Record<string, Command>> = {
   "/": ["operator", "÷"],
   "*": ["operator", "×"],
@@ -154,11 +252,12 @@ const keyboardMap: Readonly<Record<string, Command>> = {
 };
 
 window.addEventListener("keydown", (event) => {
-  if (helpDialog.open || themeDialog.open) {
+  if (helpDialog.open || themeDialog.open || historyDialog.open) {
     if (event.key === "Escape") {
       event.preventDefault();
       if (helpDialog.open) helpDialog.close();
       if (themeDialog.open) themeDialog.close();
+      if (historyDialog.open) historyDialog.close();
     }
     return;
   }
@@ -186,3 +285,4 @@ window.addEventListener("keydown", (event) => {
 });
 
 render();
+renderHistory();
